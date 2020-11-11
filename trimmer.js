@@ -10,15 +10,25 @@ function getCurrURL(callback) {
 
 // trim out the tracking junk from the given Amazon product URL
 function trimTrackingJunk(url) {
-    let re = /amazon.com\/dp\/(.*?)\//; // capture everyting between the 2nd and 3rd slashes in amazon.com/dp/.../
-    var matches = re.exec(url);
-    console.log("matches: ");
-    console.log(matches);
-    if (matches == null) {
-        return url; // if no match, something went wrong, so just return the full url
-    } else {
-        return matches[0];
+    // amazon product links have two formats (maybe more? but I only know of two...):
+    // - amazon.com/dp/PROD_ID
+    // - amazon.com/gp/product/PROD_ID
+    // We need to be able to match either one. I split it into two regexes, because making it work with a single
+    // regex expression was turning out to be a pain. 
+    let re_dp = /amazon.com\/dp\/([A-Z|0-9]*)/; // capture the PROD_ID in amazon.com/dp/PROD_ID formatted links
+    let re_gp = /amazon.com\/gp\/product\/([A-Z|0-9]*)/;  // same as above, but for amazon.com/gp/product/PROD_ID formatted links
+    var re_exprs = [re_dp, re_gp];
+    var re;
+    for (re of re_exprs) {
+        let matches = re.exec(url);
+        if (matches != null) {
+            return matches[0];
+        }
     }
+    // if we finish the loop without having returned, then none of the regexes worked, so we may not be on an amazon product page
+    // (or maybe there's just yet another amazon product link format that I don't know about). In this case, just return the original
+    // url without trying to trim it.
+    return url;
    
 }
 
